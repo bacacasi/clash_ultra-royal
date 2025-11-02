@@ -28,6 +28,23 @@ PLAYER_TOWER_POS = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 80)
 AI_TOWER_POS = (SCREEN_WIDTH // 2, 80)
 TOWER_SIZE = (60, 80)
 
+class Projectile:
+    def __init__(self, start_pos, target_troop):
+        self.x, self.y = start_pos
+        self.target_troop = target_troop
+        self.speed = 10
+
+    def move(self):
+        dx = self.target_troop.x - self.x
+        dy = self.target_troop.y - self.y
+        dist = (dx**2 + dy**2)**0.5
+        if dist < self.speed:
+            return True # Reached target
+
+        self.x += (dx / dist) * self.speed
+        self.y += (dy / dist) * self.speed
+        return False
+
 
 # --- Main Game Class ---
 class GameGUI:
@@ -42,6 +59,14 @@ class GameGUI:
         self.ai_card_display_timer = 0
         self.dragging_card = None
         self.dragging_card_index = -1
+        self.projectiles = []
+
+    def _draw_projectiles(self):
+        for p in self.projectiles[:]:
+            if p.move():
+                self.projectiles.remove(p)
+            else:
+                pygame.draw.circle(self.screen, (255, 255, 0), (int(p.x), int(p.y)), 5)
 
     def _draw_ai_card(self):
         if self.ai_last_played_card and self.ai_card_display_timer > 0:
@@ -224,7 +249,12 @@ class GameGUI:
                 self._handle_input(event)
 
             if not self.game.winner:
-                self.game.update()
+                target_player, target_ai = self.game.update()
+                if target_player:
+                    self.projectiles.append(Projectile(AI_TOWER_POS, target_player))
+                if target_ai:
+                    self.projectiles.append(Projectile(PLAYER_TOWER_POS, target_ai))
+
 
             # --- Drawing ---
             self.screen.fill(BACKGROUND_COLOR)
@@ -234,6 +264,7 @@ class GameGUI:
             self._draw_ai_card()
             self._draw_dragging_card()
             self._draw_troops()
+            self._draw_projectiles()
 
             if self.game.winner:
                 winner_text = self.font.render(f"{self.game.winner} wins!", True, WHITE)

@@ -60,6 +60,13 @@ class Game:
         self.starting_mana = 5
         self.mana_regen = 1
 
+        # Tower stats
+        self.tower_attack_damage = 50
+        self.tower_attack_range = 150
+        self.tower_attack_cooldown = 1.0
+        self.player_tower_last_attack_time = 0
+        self.ai_tower_last_attack_time = 0
+
         # Game state
         self.player_hp = self.player_tower_hp
         self.ai_hp = self.ai_tower_hp
@@ -130,6 +137,10 @@ class Game:
                     self.player_troops.remove(troop)
                     self._check_for_winner()
 
+        # Tower attacks
+        target_player = self._tower_attack(self.ai_troops, self.player_troops, "ai")
+        target_ai = self._tower_attack(self.player_troops, self.ai_troops, "player")
+
         # Update AI troops
         for troop in self.ai_troops[:]:
             # Find closest enemy troop
@@ -152,6 +163,8 @@ class Game:
                     self.ai_troops.remove(troop)
                     self._check_for_winner()
 
+        return target_player, target_ai
+
     def regenerate_mana(self):
         self.player_mana += self.mana_regen
         self.ai_mana += self.mana_regen
@@ -161,6 +174,35 @@ class Game:
             self.winner = "AI"
         elif self.ai_hp <= 0:
             self.winner = "Player"
+
+    def _tower_attack(self, friendly_troops, enemy_troops, owner):
+        tower_pos = (200, 520) if owner == "player" else (200, 80)
+        last_attack_time = self.player_tower_last_attack_time if owner == "player" else self.ai_tower_last_attack_time
+
+        current_time = pygame.time.get_ticks() / 1000
+        if current_time - last_attack_time < self.tower_attack_cooldown:
+            return
+
+        closest_enemy = None
+        closest_dist = float('inf')
+        for enemy in enemy_troops:
+            dist = math.hypot(tower_pos[0] - enemy.x, tower_pos[1] - enemy.y)
+            if dist < closest_dist:
+                closest_dist = dist
+                closest_enemy = enemy
+
+        if closest_enemy and closest_dist <= self.tower_attack_range:
+            closest_enemy.hp -= self.tower_attack_damage
+            if owner == "player":
+                self.player_tower_last_attack_time = current_time
+            else:
+                self.ai_tower_last_attack_time = current_time
+
+            if closest_enemy.hp <= 0:
+                enemy_troops.remove(closest_enemy)
+            return closest_enemy
+        return None
+
 
 def main_text():
     """Main function for the text-based game."""
