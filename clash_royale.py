@@ -48,7 +48,7 @@ class Game:
         # Cards
         self.cards = [
             {"name": "Knight", "mana_cost": 3, "hp": 500, "tower_damage": 100, "attack_damage": 100, "attack_range": 20, "attack_cooldown": 1.0, "speed": 2.5},
-            {"name": "Giant", "mana_cost": 5, "hp": 1000, "tower_damage": 200, "attack_damage": 50, "attack_range": 20, "attack_cooldown": 1.5, "speed": 1.5},
+            {"name": "Giant", "mana_cost": 5, "hp": 2000, "tower_damage": 200, "attack_damage": 50, "attack_range": 20, "attack_cooldown": 1.5, "speed": 1.5},
             {"name": "Archers", "mana_cost": 3, "hp": 200, "tower_damage": 50, "attack_damage": 70, "attack_range": 100, "attack_cooldown": 0.8, "speed": 2.5},
             # Fireball is instant, so it has no troop stats
             {"name": "Fireball", "mana_cost": 4, "tower_damage": 150, "speed": 0},
