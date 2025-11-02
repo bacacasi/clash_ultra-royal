@@ -9,6 +9,8 @@ BACKGROUND_COLOR = (34, 139, 34)  # Forest Green
 BRIDGE_COLOR = (139, 69, 19)  # Brown
 PLAYER_TOWER_COLOR = (0, 0, 255) # Blue
 AI_TOWER_COLOR = (255, 0, 0) # Red
+PLAYER_TROOP_COLOR = (173, 216, 230) # Light Blue
+AI_TROOP_COLOR = (255, 182, 193) # Light Red
 HP_BAR_COLOR = (255, 255, 0) # Yellow
 MANA_COLOR = (221, 160, 221) # Plum
 WHITE = (255, 255, 255)
@@ -35,6 +37,8 @@ class GameGUI:
         self.card_rects = []
         self.ai_last_played_card = None
         self.ai_card_display_timer = 0
+        self.dragging_card = None
+        self.dragging_card_index = -1
 
     def _draw_ai_card(self):
         if self.ai_last_played_card and self.ai_card_display_timer > 0:
@@ -78,12 +82,36 @@ class GameGUI:
             self.screen.blit(cost_text, (x_pos + 5, card_area_y + 35))
             self.screen.blit(damage_text, (x_pos + 5, card_area_y + 65))
 
+    def _draw_dragging_card(self):
+        if self.dragging_card:
+            mouse_pos = pygame.mouse.get_pos()
+            card_rect = pygame.Rect(mouse_pos[0] - CARD_WIDTH // 2, mouse_pos[1] - CARD_HEIGHT // 2, CARD_WIDTH, CARD_HEIGHT)
+            pygame.draw.rect(self.screen, CARD_BG_COLOR, card_rect)
+
+            name_text = self.font.render(self.dragging_card["name"], True, (0,0,0))
+            self.screen.blit(name_text, (card_rect.x + 5, card_rect.y + 5))
+
+    def _draw_troops(self):
+        for troop in self.game.player_troops:
+            pygame.draw.circle(self.screen, PLAYER_TROOP_COLOR, (int(troop.x), int(troop.y)), 10)
+        for troop in self.game.ai_troops:
+            pygame.draw.circle(self.screen, AI_TROOP_COLOR, (int(troop.x), int(troop.y)), 10)
+
     def _handle_input(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             for i, rect in enumerate(self.card_rects):
                 if rect.collidepoint(event.pos):
-                    self.game.play_card(i)
+                    self.dragging_card = self.game.cards[i]
+                    self.dragging_card_index = i
                     break
+
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if self.dragging_card:
+                # Player can only place troops on their side of the arena
+                if event.pos[1] > SCREEN_HEIGHT // 2:
+                    self.game.play_card(self.dragging_card_index, event.pos)
+                self.dragging_card = None
+                self.dragging_card_index = -1
 
     def _draw_game_state(self):
         # Draw HP bars
@@ -134,12 +162,17 @@ class GameGUI:
 
                 self._handle_input(event)
 
+            if not self.game.winner:
+                self.game.update()
+
             # --- Drawing ---
             self.screen.fill(BACKGROUND_COLOR)
             self._draw_arena()
             self._draw_game_state()
             self._draw_cards()
             self._draw_ai_card()
+            self._draw_dragging_card()
+            self._draw_troops()
 
             if self.game.winner:
                 winner_text = self.font.render(f"{self.game.winner} wins!", True, WHITE)

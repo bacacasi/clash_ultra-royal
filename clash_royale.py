@@ -1,13 +1,38 @@
 import random
+import math
+
+class Troop:
+    def __init__(self, card, owner, start_pos, target_pos):
+        self.name = card["name"]
+        self.damage = card["damage"]
+        self.speed = card["speed"]
+        self.owner = owner
+        self.x, self.y = start_pos
+        self.target_x, self.target_y = target_pos
+
+    def move(self):
+        # Move towards the target
+        dx = self.target_x - self.x
+        dy = self.target_y - self.y
+        dist = math.hypot(dx, dy)
+        if dist > self.speed:
+            self.x += (dx / dist) * self.speed
+            self.y += (dy / dist) * self.speed
+            return False # Not yet at target
+        else:
+            self.x = self.target_x
+            self.y = self.target_y
+            return True # Reached target
 
 class Game:
     def __init__(self):
         # Cards
         self.cards = [
-            {"name": "Archers", "mana_cost": 3, "damage": 50},
-            {"name": "Knight", "mana_cost": 3, "damage": 100},
-            {"name": "Giant", "mana_cost": 5, "damage": 200},
-            {"name": "Fireball", "mana_cost": 4, "damage": 150},
+            {"name": "Knight", "mana_cost": 3, "damage": 100, "speed": 5},
+            {"name": "Giant", "mana_cost": 5, "damage": 200, "speed": 3},
+            {"name": "Archers", "mana_cost": 3, "damage": 50, "speed": 5},
+            # Fireball is instant, so we'll handle it differently later
+            {"name": "Fireball", "mana_cost": 4, "damage": 150, "speed": 0},
         ]
 
         # Game constants
@@ -22,16 +47,25 @@ class Game:
         self.player_mana = self.starting_mana
         self.ai_mana = self.starting_mana
         self.winner = None
+        self.player_troops = []
+        self.ai_troops = []
 
-    def play_card(self, card_index):
+    def play_card(self, card_index, position):
         if self.winner:
-            return
+            return False
 
         chosen_card = self.cards[card_index]
         if self.player_mana >= chosen_card["mana_cost"]:
             self.player_mana -= chosen_card["mana_cost"]
-            self.ai_hp -= chosen_card["damage"]
-            self._check_for_winner()
+            if chosen_card["name"] == "Fireball":
+                # Assuming AI tower is at a fixed position for now
+                # This logic will be improved later
+                self.ai_hp -= chosen_card["damage"]
+                self._check_for_winner()
+            else:
+                # Target AI tower
+                troop = Troop(chosen_card, "player", position, (200, 80))
+                self.player_troops.append(troop)
             return True
         return False
 
@@ -43,10 +77,31 @@ class Game:
         if playable_cards:
             best_card = max(playable_cards, key=lambda card: card["damage"])
             self.ai_mana -= best_card["mana_cost"]
-            self.player_hp -= best_card["damage"]
-            self._check_for_winner()
+            if best_card["name"] == "Fireball":
+                self.player_hp -= best_card["damage"]
+                self._check_for_winner()
+            else:
+                # Spawn troop near AI tower and target player tower
+                start_pos = (random.randint(150, 250), 150)
+                troop = Troop(best_card, "ai", start_pos, (200, 520))
+                self.ai_troops.append(troop)
             return best_card
         return None
+
+    def update(self):
+        # Move player troops and deal damage
+        for troop in self.player_troops[:]:
+            if troop.move():
+                self.ai_hp -= troop.damage
+                self.player_troops.remove(troop)
+                self._check_for_winner()
+
+        # Move AI troops and deal damage
+        for troop in self.ai_troops[:]:
+            if troop.move():
+                self.player_hp -= troop.damage
+                self.ai_troops.remove(troop)
+                self._check_for_winner()
 
     def regenerate_mana(self):
         self.player_mana += self.mana_regen
