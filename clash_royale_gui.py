@@ -26,6 +26,12 @@ PLAYER_TOWER_POS = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 80)
 AI_TOWER_POS = (SCREEN_WIDTH // 2, 80)
 TOWER_SIZE = (60, 80)
 
+# --- Troop Visuals ---
+TROOP_VISUALS = {
+    "Knight": {"shape": "square", "size": 12},
+    "Giant": {"shape": "circle", "size": 20},
+    "Archers": {"shape": "triangle", "size": 10},
+}
 
 # --- Main Game Class ---
 class GameGUI:
@@ -94,9 +100,27 @@ class GameGUI:
 
     def _draw_troops(self):
         for troop in self.game.player_troops:
-            pygame.draw.circle(self.screen, PLAYER_TROOP_COLOR, (int(troop.x), int(troop.y)), 10)
+            self._draw_troop(troop, PLAYER_TROOP_COLOR)
         for troop in self.game.ai_troops:
-            pygame.draw.circle(self.screen, AI_TROOP_COLOR, (int(troop.x), int(troop.y)), 10)
+            self._draw_troop(troop, AI_TROOP_COLOR)
+
+    def _draw_troop(self, troop, color):
+        visuals = TROOP_VISUALS.get(troop.name)
+        if not visuals:
+            return # Don't draw if no visuals defined
+
+        pos = (int(troop.x), int(troop.y))
+        size = visuals["size"]
+
+        if visuals["shape"] == "circle":
+            pygame.draw.circle(self.screen, color, pos, size)
+        elif visuals["shape"] == "square":
+            rect = pygame.Rect(pos[0] - size, pos[1] - size, size * 2, size * 2)
+            pygame.draw.rect(self.screen, color, rect)
+        elif visuals["shape"] == "triangle":
+            points = [(pos[0], pos[1] - size), (pos[0] - size, pos[1] + size), (pos[0] + size, pos[1] + size)]
+            pygame.draw.polygon(self.screen, color, points)
+
 
     def _handle_input(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
