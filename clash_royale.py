@@ -55,8 +55,8 @@ class Game:
         ]
 
         # Game constants
-        self.player_tower_hp = 1000
-        self.ai_tower_hp = 1000
+        self.player_tower_hp = 2500
+        self.ai_tower_hp = 2500
         self.starting_mana = 5
         self.mana_regen = 1
 
