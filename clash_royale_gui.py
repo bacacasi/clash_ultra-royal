@@ -15,6 +15,7 @@ HP_BAR_COLOR = (255, 255, 0) # Yellow
 MANA_COLOR = (221, 160, 221) # Plum
 WHITE = (255, 255, 255)
 FONT_SIZE = 30
+FPS = 60
 CARD_AREA_HEIGHT = 120
 CARD_WIDTH = 80
 CARD_HEIGHT = 100
@@ -180,6 +181,7 @@ class GameGUI:
                 self.screen.blit(winner_text, text_rect)
 
             pygame.display.flip()
+            clock.tick(FPS)
 
         pygame.quit()
         sys.exit()

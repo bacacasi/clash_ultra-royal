@@ -28,9 +28,9 @@ class Game:
     def __init__(self):
         # Cards
         self.cards = [
-            {"name": "Knight", "mana_cost": 3, "damage": 100, "speed": 5},
-            {"name": "Giant", "mana_cost": 5, "damage": 200, "speed": 3},
-            {"name": "Archers", "mana_cost": 3, "damage": 50, "speed": 5},
+            {"name": "Knight", "mana_cost": 3, "damage": 100, "speed": 2.5},
+            {"name": "Giant", "mana_cost": 5, "damage": 200, "speed": 1.5},
+            {"name": "Archers", "mana_cost": 3, "damage": 50, "speed": 2.5},
             # Fireball is instant, so we'll handle it differently later
             {"name": "Fireball", "mana_cost": 4, "damage": 150, "speed": 0},
         ]
