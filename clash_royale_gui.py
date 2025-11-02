@@ -28,12 +28,6 @@ PLAYER_TOWER_POS = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 80)
 AI_TOWER_POS = (SCREEN_WIDTH // 2, 80)
 TOWER_SIZE = (60, 80)
 
-# --- Troop Visuals ---
-TROOP_VISUALS = {
-    "Knight": {"shape": "square", "size": 12},
-    "Giant": {"shape": "circle", "size": 20},
-    "Archers": {"shape": "triangle", "size": 10},
-}
 
 # --- Main Game Class ---
 class GameGUI:
@@ -109,28 +103,40 @@ class GameGUI:
             self._draw_troop(troop, AI_TROOP_COLOR)
 
     def _draw_troop(self, troop, color):
-        visuals = TROOP_VISUALS.get(troop.name)
-        if not visuals:
-            return # Don't draw if no visuals defined
-
         pos = (int(troop.x), int(troop.y))
-        size = visuals["size"]
+        size = 10 # Default size
 
-        if visuals["shape"] == "circle":
+        if troop.name == "Knight":
+            size = 12
+            # Body
+            pygame.draw.rect(self.screen, color, (pos[0] - size, pos[1] - size, size*2, size*2))
+            # Head
+            pygame.draw.circle(self.screen, color, (pos[0], pos[1] - size - 5), 5)
+            # Sword
+            pygame.draw.line(self.screen, (192, 192, 192), (pos[0] + size, pos[1]), (pos[0] + size + 10, pos[1] - 10), 3)
+        elif troop.name == "Giant":
+            size = 20
+            # Body
             pygame.draw.circle(self.screen, color, pos, size)
-        elif visuals["shape"] == "square":
-            rect = pygame.Rect(pos[0] - size, pos[1] - size, size * 2, size * 2)
-            pygame.draw.rect(self.screen, color, rect)
-        elif visuals["shape"] == "triangle":
+            # Head
+            pygame.draw.circle(self.screen, color, (pos[0], pos[1] - size - 8), 8)
+        elif troop.name == "Archers":
+            size = 10
+            # Body
             points = [(pos[0], pos[1] - size), (pos[0] - size, pos[1] + size), (pos[0] + size, pos[1] + size)]
             pygame.draw.polygon(self.screen, color, points)
+            # Head
+            pygame.draw.circle(self.screen, color, (pos[0], pos[1] - size - 5), 5)
+            # Bow
+            pygame.draw.arc(self.screen, (139, 69, 19), [pos[0]+5, pos[1]-10, 10, 20], 1.57, 4.71, 2)
+
 
         # Draw HP bar for troop
         hp_percentage = troop.hp / troop.max_hp
         hp_bar_width = size * 2 * hp_percentage
         hp_bar_height = 5
         hp_bar_x = pos[0] - size
-        hp_bar_y = pos[1] - size - 10
+        hp_bar_y = pos[1] - size - 15
         pygame.draw.rect(self.screen, (255,0,0), (hp_bar_x, hp_bar_y, size * 2, hp_bar_height))
         pygame.draw.rect(self.screen, (0,255,0), (hp_bar_x, hp_bar_y, hp_bar_width, hp_bar_height))
 
