@@ -6,6 +6,8 @@ from clash_royale import Game
 SCREEN_WIDTH = 400
 SCREEN_HEIGHT = 600
 BACKGROUND_COLOR = (34, 139, 34)  # Forest Green
+RIVER_COLOR = (65, 105, 225)  # Royal Blue
+PATH_COLOR = (184, 134, 11)   # Dark Goldenrod
 BRIDGE_COLOR = (139, 69, 19)  # Brown
 PLAYER_TOWER_COLOR = (0, 0, 255) # Blue
 AI_TOWER_COLOR = (255, 0, 0) # Red
@@ -157,15 +159,32 @@ class GameGUI:
 
 
     def _draw_arena(self):
-        # Draw bridge
-        pygame.draw.line(self.screen, BRIDGE_COLOR, (0, SCREEN_HEIGHT // 2), (SCREEN_WIDTH, SCREEN_HEIGHT // 2), 10)
+        # Draw river
+        pygame.draw.rect(self.screen, RIVER_COLOR, (0, SCREEN_HEIGHT // 2 - 30, SCREEN_WIDTH, 60))
 
-        # Draw towers
-        player_tower_rect = pygame.Rect(PLAYER_TOWER_POS[0] - TOWER_SIZE[0] // 2, PLAYER_TOWER_POS[1] - TOWER_SIZE[1] // 2, TOWER_SIZE[0], TOWER_SIZE[1])
-        pygame.draw.rect(self.screen, PLAYER_TOWER_COLOR, player_tower_rect)
+        # Draw paths
+        pygame.draw.rect(self.screen, PATH_COLOR, (50, SCREEN_HEIGHT // 2, 80, SCREEN_HEIGHT // 2))
+        pygame.draw.rect(self.screen, PATH_COLOR, (SCREEN_WIDTH - 130, SCREEN_HEIGHT // 2, 80, SCREEN_HEIGHT // 2))
+        pygame.draw.rect(self.screen, PATH_COLOR, (50, 0, 80, SCREEN_HEIGHT // 2))
+        pygame.draw.rect(self.screen, PATH_COLOR, (SCREEN_WIDTH - 130, 0, 80, SCREEN_HEIGHT // 2))
 
-        ai_tower_rect = pygame.Rect(AI_TOWER_POS[0] - TOWER_SIZE[0] // 2, AI_TOWER_POS[1] - TOWER_SIZE[1] // 2, TOWER_SIZE[0], TOWER_SIZE[1])
-        pygame.draw.rect(self.screen, AI_TOWER_COLOR, ai_tower_rect)
+        # Draw bridges
+        pygame.draw.rect(self.screen, BRIDGE_COLOR, (50, SCREEN_HEIGHT // 2 - 10, 80, 20))
+        pygame.draw.rect(self.screen, BRIDGE_COLOR, (SCREEN_WIDTH - 130, SCREEN_HEIGHT // 2 - 10, 80, 20))
+
+        # Draw towers with crenellations
+        self._draw_tower_with_crenellations(PLAYER_TOWER_POS, PLAYER_TOWER_COLOR)
+        self._draw_tower_with_crenellations(AI_TOWER_POS, AI_TOWER_COLOR)
+
+    def _draw_tower_with_crenellations(self, pos, color):
+        tower_rect = pygame.Rect(pos[0] - TOWER_SIZE[0] // 2, pos[1] - TOWER_SIZE[1] // 2, TOWER_SIZE[0], TOWER_SIZE[1])
+        pygame.draw.rect(self.screen, color, tower_rect)
+
+        # Crenellations
+        for i in range(4):
+            cren_x = tower_rect.left + i * (TOWER_SIZE[0] / 4) + 5
+            cren_y = tower_rect.top - 10
+            pygame.draw.rect(self.screen, color, (cren_x, cren_y, 10, 10))
 
 
     def run(self):
