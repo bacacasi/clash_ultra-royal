@@ -17,6 +17,7 @@ class Troop:
         self.x, self.y = start_pos
         self.target_x, self.target_y = target_pos
         self.target_troop = None
+        self.is_attacking_tower = False
 
     def attack(self, target):
         current_time = pygame.time.get_ticks() / 1000
@@ -28,7 +29,7 @@ class Troop:
 
     def move(self):
         # Move towards the target
-        if self.target_troop:
+        if self.target_troop or self.is_attacking_tower:
             return False # Don't move if attacking
 
         dx = self.target_x - self.x
@@ -132,10 +133,13 @@ class Game:
                     self.ai_troops.remove(closest_enemy)
             else:
                 troop.target_troop = None
-                if troop.move():
-                    self.ai_hp -= troop.tower_damage
-                    self.player_troops.remove(troop)
-                    self._check_for_winner()
+                troop.is_attacking_tower = troop.move()
+                if troop.is_attacking_tower:
+                    current_time = pygame.time.get_ticks() / 1000
+                    if current_time - troop.last_attack_time >= troop.attack_cooldown:
+                        self.ai_hp -= troop.tower_damage
+                        troop.last_attack_time = current_time
+                        self._check_for_winner()
 
         # Tower attacks
         target_player = self._tower_attack(self.ai_troops, self.player_troops, "ai")
@@ -158,10 +162,13 @@ class Game:
                     self.player_troops.remove(closest_enemy)
             else:
                 troop.target_troop = None
-                if troop.move():
-                    self.player_hp -= troop.tower_damage
-                    self.ai_troops.remove(troop)
-                    self._check_for_winner()
+                troop.is_attacking_tower = troop.move()
+                if troop.is_attacking_tower:
+                    current_time = pygame.time.get_ticks() / 1000
+                    if current_time - troop.last_attack_time >= troop.attack_cooldown:
+                        self.player_hp -= troop.tower_damage
+                        troop.last_attack_time = current_time
+                        self._check_for_winner()
 
         return target_player, target_ai
 
