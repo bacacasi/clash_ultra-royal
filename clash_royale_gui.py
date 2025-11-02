@@ -62,7 +62,8 @@ class GameGUI:
             card = self.ai_last_played_card
             name_text = self.font.render(card["name"], True, (0,0,0))
             cost_text = self.font.render(f"Cost: {card['mana_cost']}", True, (0,0,0))
-            damage_text = self.font.render(f"DMG: {card['damage']}", True, (0,0,0))
+            damage = card.get('tower_damage', card.get('attack_damage', 0))
+            damage_text = self.font.render(f"DMG: {damage}", True, (0,0,0))
 
             self.screen.blit(name_text, (x_pos + 5, card_area_y + 5))
             self.screen.blit(cost_text, (x_pos + 5, card_area_y + 35))
@@ -85,7 +86,8 @@ class GameGUI:
             # Draw card text
             name_text = self.font.render(card["name"], True, (0,0,0))
             cost_text = self.font.render(f"Cost: {card['mana_cost']}", True, (0,0,0))
-            damage_text = self.font.render(f"DMG: {card['damage']}", True, (0,0,0))
+            damage = card.get('tower_damage', card.get('attack_damage', 0))
+            damage_text = self.font.render(f"DMG: {damage}", True, (0,0,0))
 
             self.screen.blit(name_text, (x_pos + 5, card_area_y + 5))
             self.screen.blit(cost_text, (x_pos + 5, card_area_y + 35))
@@ -122,6 +124,15 @@ class GameGUI:
         elif visuals["shape"] == "triangle":
             points = [(pos[0], pos[1] - size), (pos[0] - size, pos[1] + size), (pos[0] + size, pos[1] + size)]
             pygame.draw.polygon(self.screen, color, points)
+
+        # Draw HP bar for troop
+        hp_percentage = troop.hp / troop.max_hp
+        hp_bar_width = size * 2 * hp_percentage
+        hp_bar_height = 5
+        hp_bar_x = pos[0] - size
+        hp_bar_y = pos[1] - size - 10
+        pygame.draw.rect(self.screen, (255,0,0), (hp_bar_x, hp_bar_y, size * 2, hp_bar_height))
+        pygame.draw.rect(self.screen, (0,255,0), (hp_bar_x, hp_bar_y, hp_bar_width, hp_bar_height))
 
 
     def _handle_input(self, event):

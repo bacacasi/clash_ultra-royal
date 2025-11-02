@@ -1,17 +1,36 @@
 import random
 import math
+import pygame # For time tracking
 
 class Troop:
     def __init__(self, card, owner, start_pos, target_pos):
         self.name = card["name"]
-        self.damage = card["damage"]
+        self.hp = card["hp"]
+        self.max_hp = card["hp"]
+        self.tower_damage = card["tower_damage"]
+        self.attack_damage = card["attack_damage"]
+        self.attack_range = card["attack_range"]
+        self.attack_cooldown = card["attack_cooldown"]
+        self.last_attack_time = 0
         self.speed = card["speed"]
         self.owner = owner
         self.x, self.y = start_pos
         self.target_x, self.target_y = target_pos
+        self.target_troop = None
+
+    def attack(self, target):
+        current_time = pygame.time.get_ticks() / 1000
+        if current_time - self.last_attack_time >= self.attack_cooldown:
+            target.hp -= self.attack_damage
+            self.last_attack_time = current_time
+            return target.hp <= 0
+        return False
 
     def move(self):
         # Move towards the target
+        if self.target_troop:
+            return False # Don't move if attacking
+
         dx = self.target_x - self.x
         dy = self.target_y - self.y
         dist = math.hypot(dx, dy)
@@ -28,11 +47,11 @@ class Game:
     def __init__(self):
         # Cards
         self.cards = [
-            {"name": "Knight", "mana_cost": 3, "damage": 100, "speed": 2.5},
-            {"name": "Giant", "mana_cost": 5, "damage": 200, "speed": 1.5},
-            {"name": "Archers", "mana_cost": 3, "damage": 50, "speed": 2.5},
-            # Fireball is instant, so we'll handle it differently later
-            {"name": "Fireball", "mana_cost": 4, "damage": 150, "speed": 0},
+            {"name": "Knight", "mana_cost": 3, "hp": 500, "tower_damage": 100, "attack_damage": 100, "attack_range": 20, "attack_cooldown": 1.0, "speed": 2.5},
+            {"name": "Giant", "mana_cost": 5, "hp": 1000, "tower_damage": 200, "attack_damage": 50, "attack_range": 20, "attack_cooldown": 1.5, "speed": 1.5},
+            {"name": "Archers", "mana_cost": 3, "hp": 200, "tower_damage": 50, "attack_damage": 70, "attack_range": 100, "attack_cooldown": 0.8, "speed": 2.5},
+            # Fireball is instant, so it has no troop stats
+            {"name": "Fireball", "mana_cost": 4, "tower_damage": 150, "speed": 0},
         ]
 
         # Game constants
@@ -60,7 +79,7 @@ class Game:
             if chosen_card["name"] == "Fireball":
                 # Assuming AI tower is at a fixed position for now
                 # This logic will be improved later
-                self.ai_hp -= chosen_card["damage"]
+                self.ai_hp -= chosen_card["tower_damage"]
                 self._check_for_winner()
             else:
                 # Target AI tower
@@ -75,10 +94,10 @@ class Game:
 
         playable_cards = [card for card in self.cards if card["mana_cost"] <= self.ai_mana]
         if playable_cards:
-            best_card = max(playable_cards, key=lambda card: card["damage"])
+            best_card = max(playable_cards, key=lambda card: card.get("tower_damage", 0) + card.get("attack_damage", 0))
             self.ai_mana -= best_card["mana_cost"]
             if best_card["name"] == "Fireball":
-                self.player_hp -= best_card["damage"]
+                self.player_hp -= best_card["tower_damage"]
                 self._check_for_winner()
             else:
                 # Spawn troop near AI tower and target player tower
@@ -89,19 +108,49 @@ class Game:
         return None
 
     def update(self):
-        # Move player troops and deal damage
+        # Update player troops
         for troop in self.player_troops[:]:
-            if troop.move():
-                self.ai_hp -= troop.damage
-                self.player_troops.remove(troop)
-                self._check_for_winner()
+            # Find closest enemy troop
+            closest_enemy = None
+            closest_dist = float('inf')
+            for enemy in self.ai_troops:
+                dist = math.hypot(troop.x - enemy.x, troop.y - enemy.y)
+                if dist < closest_dist:
+                    closest_dist = dist
+                    closest_enemy = enemy
 
-        # Move AI troops and deal damage
+            if closest_enemy and closest_dist <= troop.attack_range:
+                troop.target_troop = closest_enemy
+                if troop.attack(closest_enemy):
+                    self.ai_troops.remove(closest_enemy)
+            else:
+                troop.target_troop = None
+                if troop.move():
+                    self.ai_hp -= troop.tower_damage
+                    self.player_troops.remove(troop)
+                    self._check_for_winner()
+
+        # Update AI troops
         for troop in self.ai_troops[:]:
-            if troop.move():
-                self.player_hp -= troop.damage
-                self.ai_troops.remove(troop)
-                self._check_for_winner()
+            # Find closest enemy troop
+            closest_enemy = None
+            closest_dist = float('inf')
+            for enemy in self.player_troops:
+                dist = math.hypot(troop.x - enemy.x, troop.y - enemy.y)
+                if dist < closest_dist:
+                    closest_dist = dist
+                    closest_enemy = enemy
+
+            if closest_enemy and closest_dist <= troop.attack_range:
+                troop.target_troop = closest_enemy
+                if troop.attack(closest_enemy):
+                    self.player_troops.remove(closest_enemy)
+            else:
+                troop.target_troop = None
+                if troop.move():
+                    self.player_hp -= troop.tower_damage
+                    self.ai_troops.remove(troop)
+                    self._check_for_winner()
 
     def regenerate_mana(self):
         self.player_mana += self.mana_regen
@@ -125,7 +174,8 @@ def main_text():
 
         print("\nAvailable Cards:")
         for i, card in enumerate(game.cards):
-            print(f"{i + 1}. {card['name']} (Cost: {card['mana_cost']}, Damage: {card['damage']})")
+            damage = card.get('tower_damage', card.get('attack_damage', 0))
+            print(f"{i + 1}. {card['name']} (Cost: {card['mana_cost']}, Damage: {damage})")
 
         try:
             choice = int(input("Choose a card to play (1-4): ")) - 1
