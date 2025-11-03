@@ -3,7 +3,7 @@ import math
 import pygame # For time tracking
 
 class Troop:
-    def __init__(self, card, owner, start_pos, target_pos):
+    def __init__(self, card, owner, start_pos):
         self.name = card["name"]
         self.hp = card["hp"]
         self.max_hp = card["hp"]
@@ -15,7 +15,7 @@ class Troop:
         self.speed = card["speed"]
         self.owner = owner
         self.x, self.y = start_pos
-        self.target_x, self.target_y = target_pos
+        self.path = []
         self.target_troop = None
         self.is_attacking_tower = False
 
@@ -29,20 +29,23 @@ class Troop:
 
     def move(self):
         # Move towards the target
-        if self.target_troop or self.is_attacking_tower:
-            return False # Don't move if attacking
+        if self.target_troop or self.is_attacking_tower or not self.path:
+            return False # Don't move if attacking or no path
 
-        dx = self.target_x - self.x
-        dy = self.target_y - self.y
+        target_x, target_y = self.path[0]
+
+        dx = target_x - self.x
+        dy = target_y - self.y
         dist = math.hypot(dx, dy)
         if dist > self.speed:
             self.x += (dx / dist) * self.speed
             self.y += (dy / dist) * self.speed
-            return False # Not yet at target
+            return False # Not yet at waypoint
         else:
-            self.x = self.target_x
-            self.y = self.target_y
-            return True # Reached target
+            self.x = target_x
+            self.y = target_y
+            self.path.pop(0)
+            return not self.path # Return True if path is complete
 
 class Game:
     def __init__(self):
@@ -60,6 +63,10 @@ class Game:
         self.ai_tower_hp = 2500
         self.starting_mana = 5
         self.mana_regen = 1
+
+        # Arena constants
+        self.river_y = 300
+        self.bridges = [(90, 300), (310, 300)]
 
         # Tower stats
         self.tower_attack_damage = 50
@@ -90,8 +97,7 @@ class Game:
                 self.ai_hp -= chosen_card["tower_damage"]
                 self._check_for_winner()
             else:
-                # Target AI tower
-                troop = Troop(chosen_card, "player", position, (200, 80))
+                troop = Troop(chosen_card, "player", position)
                 self.player_troops.append(troop)
             return True
         return False
@@ -108,9 +114,8 @@ class Game:
                 self.player_hp -= best_card["tower_damage"]
                 self._check_for_winner()
             else:
-                # Spawn troop near AI tower and target player tower
                 start_pos = (random.randint(150, 250), 150)
-                troop = Troop(best_card, "ai", start_pos, (200, 520))
+                troop = Troop(best_card, "ai", start_pos)
                 self.ai_troops.append(troop)
             return best_card
         return None
@@ -129,8 +134,7 @@ class Game:
 
             if closest_enemy:
                 troop.is_attacking_tower = False
-                troop.target_x = closest_enemy.x
-                troop.target_y = closest_enemy.y
+                troop.path = self._get_path((troop.x, troop.y), (closest_enemy.x, closest_enemy.y))
                 if closest_dist <= troop.attack_range:
                     troop.target_troop = closest_enemy
                     if troop.attack(closest_enemy):
@@ -141,8 +145,7 @@ class Game:
                     troop.move()
             else: # No enemies left, target tower
                 troop.target_troop = None
-                troop.target_x = 200 # AI Tower pos
-                troop.target_y = 80
+                troop.path = self._get_path((troop.x, troop.y), (200, 80)) # AI Tower pos
                 if not troop.is_attacking_tower:
                     troop.is_attacking_tower = troop.move()
 
@@ -170,8 +173,7 @@ class Game:
 
             if closest_enemy:
                 troop.is_attacking_tower = False
-                troop.target_x = closest_enemy.x
-                troop.target_y = closest_enemy.y
+                troop.path = self._get_path((troop.x, troop.y), (closest_enemy.x, closest_enemy.y))
                 if closest_dist <= troop.attack_range:
                     troop.target_troop = closest_enemy
                     if troop.attack(closest_enemy):
@@ -182,8 +184,7 @@ class Game:
                     troop.move()
             else: # No enemies left, target tower
                 troop.target_troop = None
-                troop.target_x = 200 # Player Tower pos
-                troop.target_y = 520
+                troop.path = self._get_path((troop.x, troop.y), (200, 520)) # Player Tower pos
                 if not troop.is_attacking_tower:
                     troop.is_attacking_tower = troop.move()
 
@@ -205,6 +206,18 @@ class Game:
             self.winner = "AI"
         elif self.ai_hp <= 0:
             self.winner = "Player"
+
+    def _get_path(self, start_pos, target_pos):
+        path = []
+        # If crossing river
+        if (start_pos[1] < self.river_y and target_pos[1] > self.river_y) or \
+           (start_pos[1] > self.river_y and target_pos[1] < self.river_y):
+            # Find closest bridge
+            closest_bridge = min(self.bridges, key=lambda b: math.hypot(start_pos[0] - b[0], start_pos[1] - b[1]))
+            path.append(closest_bridge)
+
+        path.append(target_pos)
+        return path
 
     def _tower_attack(self, friendly_troops, enemy_troops, owner):
         tower_pos = (200, 520) if owner == "player" else (200, 80)
