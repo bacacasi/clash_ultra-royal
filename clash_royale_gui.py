@@ -60,6 +60,7 @@ class GameGUI:
         self.dragging_card = None
         self.dragging_card_index = -1
         self.projectiles = []
+        self.game_state = 'start_screen'
 
     def _draw_projectiles(self):
         for p in self.projectiles[:]:
@@ -167,20 +168,26 @@ class GameGUI:
 
 
     def _handle_input(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            for i, rect in enumerate(self.card_rects):
-                if rect.collidepoint(event.pos):
-                    self.dragging_card = self.game.cards[i]
-                    self.dragging_card_index = i
-                    break
+        if self.game_state == 'start_screen':
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                button_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 25, 200, 50)
+                if button_rect.collidepoint(event.pos):
+                    self.game_state = 'playing'
+        elif self.game_state == 'playing':
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                for i, rect in enumerate(self.card_rects):
+                    if rect.collidepoint(event.pos):
+                        self.dragging_card = self.game.cards[i]
+                        self.dragging_card_index = i
+                        break
 
-        elif event.type == pygame.MOUSEBUTTONUP:
-            if self.dragging_card:
-                # Player can only place troops on their side of the arena
-                if event.pos[1] > SCREEN_HEIGHT // 2:
-                    self.game.play_card(self.dragging_card_index, event.pos)
-                self.dragging_card = None
-                self.dragging_card_index = -1
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if self.dragging_card:
+                    # Player can only place troops on their side of the arena
+                    if event.pos[1] > SCREEN_HEIGHT // 2:
+                        self.game.play_card(self.dragging_card_index, event.pos)
+                    self.dragging_card = None
+                    self.dragging_card_index = -1
 
     def _draw_game_state(self):
         # Draw HP bars
@@ -228,6 +235,19 @@ class GameGUI:
             cren_y = tower_rect.top - 10
             pygame.draw.rect(self.screen, color, (cren_x, cren_y, 10, 10))
 
+    def _draw_start_screen(self):
+        self.screen.fill(BACKGROUND_COLOR)
+
+        # Draw button
+        button_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 25, 200, 50)
+        pygame.draw.rect(self.screen, (255, 255, 0), button_rect) # Yellow border
+        pygame.draw.rect(self.screen, (0, 0, 0), button_rect.inflate(-5, -5)) # Black background
+
+        # Draw text
+        text = self.font.render("Combat", True, (255, 255, 255))
+        text_rect = text.get_rect(center=button_rect.center)
+        self.screen.blit(text, text_rect)
+
 
     def run(self):
         running = True
@@ -248,17 +268,20 @@ class GameGUI:
 
                 self._handle_input(event)
 
-            if not self.game.winner:
-                target_player, target_ai = self.game.update()
-                if target_player:
-                    self.projectiles.append(Projectile(AI_TOWER_POS, target_player))
-                if target_ai:
-                    self.projectiles.append(Projectile(PLAYER_TOWER_POS, target_ai))
-
+            if self.game_state == 'playing':
+                if not self.game.winner:
+                    target_player, target_ai = self.game.update()
+                    if target_player:
+                        self.projectiles.append(Projectile(AI_TOWER_POS, target_player))
+                    if target_ai:
+                        self.projectiles.append(Projectile(PLAYER_TOWER_POS, target_ai))
 
             # --- Drawing ---
-            self.screen.fill(BACKGROUND_COLOR)
-            self._draw_arena()
+            if self.game_state == 'start_screen':
+                self._draw_start_screen()
+            elif self.game_state == 'playing':
+                self.screen.fill(BACKGROUND_COLOR)
+                self._draw_arena()
             self._draw_game_state()
             self._draw_cards()
             self._draw_ai_card()
