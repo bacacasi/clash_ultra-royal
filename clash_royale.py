@@ -127,13 +127,25 @@ class Game:
                     closest_dist = dist
                     closest_enemy = enemy
 
-            if closest_enemy and closest_dist <= troop.attack_range:
-                troop.target_troop = closest_enemy
-                if troop.attack(closest_enemy):
-                    self.ai_troops.remove(closest_enemy)
-            else:
+            if closest_enemy:
+                troop.is_attacking_tower = False
+                troop.target_x = closest_enemy.x
+                troop.target_y = closest_enemy.y
+                if closest_dist <= troop.attack_range:
+                    troop.target_troop = closest_enemy
+                    if troop.attack(closest_enemy):
+                        self.ai_troops.remove(closest_enemy)
+                        troop.target_troop = None # Retarget next frame
+                else:
+                    troop.target_troop = None
+                    troop.move()
+            else: # No enemies left, target tower
                 troop.target_troop = None
-                troop.is_attacking_tower = troop.move()
+                troop.target_x = 200 # AI Tower pos
+                troop.target_y = 80
+                if not troop.is_attacking_tower:
+                    troop.is_attacking_tower = troop.move()
+
                 if troop.is_attacking_tower:
                     current_time = pygame.time.get_ticks() / 1000
                     if current_time - troop.last_attack_time >= troop.attack_cooldown:
@@ -156,13 +168,25 @@ class Game:
                     closest_dist = dist
                     closest_enemy = enemy
 
-            if closest_enemy and closest_dist <= troop.attack_range:
-                troop.target_troop = closest_enemy
-                if troop.attack(closest_enemy):
-                    self.player_troops.remove(closest_enemy)
-            else:
+            if closest_enemy:
+                troop.is_attacking_tower = False
+                troop.target_x = closest_enemy.x
+                troop.target_y = closest_enemy.y
+                if closest_dist <= troop.attack_range:
+                    troop.target_troop = closest_enemy
+                    if troop.attack(closest_enemy):
+                        self.player_troops.remove(closest_enemy)
+                        troop.target_troop = None
+                else:
+                    troop.target_troop = None
+                    troop.move()
+            else: # No enemies left, target tower
                 troop.target_troop = None
-                troop.is_attacking_tower = troop.move()
+                troop.target_x = 200 # Player Tower pos
+                troop.target_y = 520
+                if not troop.is_attacking_tower:
+                    troop.is_attacking_tower = troop.move()
+
                 if troop.is_attacking_tower:
                     current_time = pygame.time.get_ticks() / 1000
                     if current_time - troop.last_attack_time >= troop.attack_cooldown:
