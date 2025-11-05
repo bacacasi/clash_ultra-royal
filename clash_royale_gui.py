@@ -171,10 +171,15 @@ class GameGUI:
         if self.game_state == 'start_screen':
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.combat_button_rect.collidepoint(event.pos):
+                    self.game.reset()
                     self.game_state = 'playing'
                 elif self.quit_button_rect.collidepoint(event.pos):
                     pygame.quit()
                     sys.exit()
+        elif self.game_state == 'game_over':
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if self.menu_button_rect.collidepoint(event.pos):
+                    self.game_state = 'start_screen'
         elif self.game_state == 'playing':
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for i, rect in enumerate(self.card_rects):
@@ -237,6 +242,31 @@ class GameGUI:
             cren_y = tower_rect.top - 10
             pygame.draw.rect(self.screen, color, (cren_x, cren_y, 10, 10))
 
+    def _draw_game_over_screen(self):
+        self._draw_gradient_background()
+
+        # Display result
+        result_text = "Victoire !" if self.game.winner == "Player" else "Défaite"
+        trophy_text = f"Trophées: {self.game.last_match_trophies:+#}"
+
+        result_font = pygame.font.SysFont(None, 72)
+        result_surface = result_font.render(result_text, True, (255, 255, 0))
+        result_rect = result_surface.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 4))
+        self.screen.blit(result_surface, result_rect)
+
+        trophy_font = pygame.font.SysFont(None, 48)
+        trophy_surface = trophy_font.render(trophy_text, True, WHITE)
+        trophy_rect = trophy_surface.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
+        self.screen.blit(trophy_surface, trophy_rect)
+
+        # Back to menu button
+        self.menu_button_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT * 3 // 4 - 25, 200, 50)
+        pygame.draw.rect(self.screen, (255, 255, 0), self.menu_button_rect) # Yellow border
+        pygame.draw.rect(self.screen, (0, 0, 0), self.menu_button_rect.inflate(-5, -5))
+        menu_text = self.font.render("Menu Principal", True, WHITE)
+        menu_text_rect = menu_text.get_rect(center=self.menu_button_rect.center)
+        self.screen.blit(menu_text, menu_text_rect)
+
     def _draw_gradient_background(self):
         top_color = (0, 0, 139) # Dark Blue
         bottom_color = (135, 206, 250) # Light Sky Blue
@@ -255,6 +285,13 @@ class GameGUI:
         title_text = title_font.render("Clash Royale", True, (255, 255, 0))
         title_rect = title_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4))
         self.screen.blit(title_text, title_rect)
+
+        # Display trophies
+        trophy_font = pygame.font.SysFont(None, 36)
+        trophy_text = f"Trophées: {self.game.player_trophies}"
+        trophy_surface = trophy_font.render(trophy_text, True, WHITE)
+        trophy_rect = trophy_surface.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 75))
+        self.screen.blit(trophy_surface, trophy_rect)
 
         # Draw buttons
         self.combat_button_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 25, 200, 50)
@@ -316,9 +353,10 @@ class GameGUI:
                 self._draw_projectiles()
 
             if self.game.winner:
-                winner_text = self.font.render(f"{self.game.winner} wins!", True, WHITE)
-                text_rect = winner_text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
-                self.screen.blit(winner_text, text_rect)
+                self.game_state = 'game_over'
+
+            if self.game_state == 'game_over':
+                self._draw_game_over_screen()
 
             pygame.display.flip()
             clock.tick(FPS)

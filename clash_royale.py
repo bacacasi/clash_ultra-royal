@@ -83,6 +83,18 @@ class Game:
         self.winner = None
         self.player_troops = []
         self.ai_troops = []
+        self.player_trophies = 0
+        self.last_match_trophies = 0
+
+    def reset(self):
+        self.player_hp = self.player_tower_hp
+        self.ai_hp = self.ai_tower_hp
+        self.player_mana = self.starting_mana
+        self.ai_mana = self.starting_mana
+        self.winner = None
+        self.player_troops = []
+        self.ai_troops = []
+        self.last_match_trophies = 0
 
     def play_card(self, card_index, position):
         if self.winner:
@@ -202,10 +214,18 @@ class Game:
         self.ai_mana += self.mana_regen
 
     def _check_for_winner(self):
+        if self.winner: # Already decided
+            return
+
+        trophy_change = random.randint(27, 33)
         if self.player_hp <= 0:
             self.winner = "AI"
+            self.last_match_trophies = -trophy_change
+            self.player_trophies += self.last_match_trophies
         elif self.ai_hp <= 0:
             self.winner = "Player"
+            self.last_match_trophies = trophy_change
+            self.player_trophies += self.last_match_trophies
 
     def _get_path(self, start_pos, target_pos):
         path = []
