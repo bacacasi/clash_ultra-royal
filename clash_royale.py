@@ -220,7 +220,7 @@ class Game:
         trophy_change = random.randint(27, 33)
         if self.player_hp <= 0:
             self.winner = "AI"
-            self.last_match_trophies = -trophy_change
+            self.last_match_trophies = -min(trophy_change, self.player_trophies)
             self.player_trophies += self.last_match_trophies
         elif self.ai_hp <= 0:
             self.winner = "Player"
