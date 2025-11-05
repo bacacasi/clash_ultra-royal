@@ -284,7 +284,7 @@ class GameGUI:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                if event.type == pygame.USEREVENT:
+                if self.game_state == 'playing' and event.type == pygame.USEREVENT:
                     if not self.game.winner:
                         played_card = self.game.ai_turn()
                         if played_card:
@@ -308,12 +308,12 @@ class GameGUI:
             elif self.game_state == 'playing':
                 self.screen.fill(BACKGROUND_COLOR)
                 self._draw_arena()
-            self._draw_game_state()
-            self._draw_cards()
-            self._draw_ai_card()
-            self._draw_dragging_card()
-            self._draw_troops()
-            self._draw_projectiles()
+                self._draw_game_state()
+                self._draw_cards()
+                self._draw_ai_card()
+                self._draw_dragging_card()
+                self._draw_troops()
+                self._draw_projectiles()
 
             if self.game.winner:
                 winner_text = self.font.render(f"{self.game.winner} wins!", True, WHITE)
