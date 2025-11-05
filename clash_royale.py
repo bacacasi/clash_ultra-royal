@@ -118,6 +118,12 @@ class Game:
         if self.winner:
             return
 
+        if self.player_trophies >= 100:
+            self._strategic_ai_turn()
+        else:
+            self._simple_ai_turn()
+
+    def _simple_ai_turn(self):
         playable_cards = [card for card in self.cards if card["mana_cost"] <= self.ai_mana]
         if playable_cards:
             best_card = max(playable_cards, key=lambda card: card.get("tower_damage", 0) + card.get("attack_damage", 0))
@@ -131,6 +137,28 @@ class Game:
                 self.ai_troops.append(troop)
             return best_card
         return None
+
+    def _strategic_ai_turn(self):
+        # Defensive logic
+        threatening_troops = [t for t in self.player_troops if t.y < self.river_y]
+        if threatening_troops:
+            best_defensive_card = None
+            # Find a card that can counter the threat
+            for card in self.cards:
+                if card['mana_cost'] <= self.ai_mana and card.get('attack_damage', 0) > 0:
+                    best_defensive_card = card
+                    break # Simple logic: use the first available troop
+
+            if best_defensive_card:
+                self.ai_mana -= best_defensive_card['mana_cost']
+                # Place troop defensively
+                start_pos = (threatening_troops[0].x, threatening_troops[0].y + 30)
+                troop = Troop(best_defensive_card, "ai", start_pos)
+                self.ai_troops.append(troop)
+                return best_defensive_card
+
+        # If no threats, play offensively (simple logic for now)
+        return self._simple_ai_turn()
 
     def update(self):
         # Update player troops
