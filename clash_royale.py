@@ -69,9 +69,9 @@ class Game:
         self.bridges = [(90, 300), (310, 300)]
 
         # Tower stats
-        self.tower_attack_damage = 50
+        self.tower_attack_damage = 75
         self.tower_attack_range = 150
-        self.tower_attack_cooldown = 1.0
+        self.tower_attack_cooldown = 0.8
         self.player_tower_last_attack_time = 0
         self.ai_tower_last_attack_time = 0
 
