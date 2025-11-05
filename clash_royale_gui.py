@@ -170,9 +170,11 @@ class GameGUI:
     def _handle_input(self, event):
         if self.game_state == 'start_screen':
             if event.type == pygame.MOUSEBUTTONDOWN:
-                button_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 25, 200, 50)
-                if button_rect.collidepoint(event.pos):
+                if self.combat_button_rect.collidepoint(event.pos):
                     self.game_state = 'playing'
+                elif self.quit_button_rect.collidepoint(event.pos):
+                    pygame.quit()
+                    sys.exit()
         elif self.game_state == 'playing':
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for i, rect in enumerate(self.card_rects):
@@ -238,15 +240,29 @@ class GameGUI:
     def _draw_start_screen(self):
         self.screen.fill(BACKGROUND_COLOR)
 
-        # Draw button
-        button_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 25, 200, 50)
-        pygame.draw.rect(self.screen, (255, 255, 0), button_rect) # Yellow border
-        pygame.draw.rect(self.screen, (0, 0, 0), button_rect.inflate(-5, -5)) # Black background
+        # Draw title
+        title_font = pygame.font.SysFont(None, 72)
+        title_text = title_font.render("Clash Royale", True, (255, 255, 0))
+        title_rect = title_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4))
+        self.screen.blit(title_text, title_rect)
 
-        # Draw text
-        text = self.font.render("Combat", True, (255, 255, 255))
-        text_rect = text.get_rect(center=button_rect.center)
-        self.screen.blit(text, text_rect)
+        # Draw buttons
+        self.combat_button_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 - 25, 200, 50)
+        self.quit_button_rect = pygame.Rect(SCREEN_WIDTH // 2 - 100, SCREEN_HEIGHT // 2 + 50, 200, 50)
+
+        # Combat button
+        pygame.draw.rect(self.screen, (255, 255, 0), self.combat_button_rect) # Yellow border
+        pygame.draw.rect(self.screen, (0, 0, 0), self.combat_button_rect.inflate(-5, -5))
+        combat_text = self.font.render("Combat", True, (255, 255, 255))
+        combat_text_rect = combat_text.get_rect(center=self.combat_button_rect.center)
+        self.screen.blit(combat_text, combat_text_rect)
+
+        # Quit button
+        pygame.draw.rect(self.screen, (255, 255, 0), self.quit_button_rect) # Yellow border
+        pygame.draw.rect(self.screen, (0, 0, 0), self.quit_button_rect.inflate(-5, -5))
+        quit_text = self.font.render("Quitter", True, (255, 255, 255))
+        quit_text_rect = quit_text.get_rect(center=self.quit_button_rect.center)
+        self.screen.blit(quit_text, quit_text_rect)
 
 
     def run(self):
