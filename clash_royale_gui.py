@@ -179,6 +179,7 @@ class GameGUI:
         elif self.game_state == 'game_over':
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.menu_button_rect.collidepoint(event.pos):
+                    self.game.reset()
                     self.game_state = 'start_screen'
         elif self.game_state == 'playing':
             if event.type == pygame.MOUSEBUTTONDOWN:
