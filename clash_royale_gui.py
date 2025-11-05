@@ -237,8 +237,18 @@ class GameGUI:
             cren_y = tower_rect.top - 10
             pygame.draw.rect(self.screen, color, (cren_x, cren_y, 10, 10))
 
+    def _draw_gradient_background(self):
+        top_color = (0, 0, 139) # Dark Blue
+        bottom_color = (135, 206, 250) # Light Sky Blue
+        for y in range(SCREEN_HEIGHT):
+            color = [
+                top_color[i] + (bottom_color[i] - top_color[i]) * y / SCREEN_HEIGHT
+                for i in range(3)
+            ]
+            pygame.draw.line(self.screen, color, (0, y), (SCREEN_WIDTH, y))
+
     def _draw_start_screen(self):
-        self.screen.fill(BACKGROUND_COLOR)
+        self._draw_gradient_background()
 
         # Draw title
         title_font = pygame.font.SysFont(None, 72)
