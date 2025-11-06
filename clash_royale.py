@@ -118,7 +118,9 @@ class Game:
         if self.winner:
             return
 
-        if self.player_trophies >= 100:
+        if self.player_trophies >= 200:
+            self._advanced_ai_turn()
+        elif self.player_trophies >= 100:
             self._strategic_ai_turn()
         else:
             self._simple_ai_turn()
@@ -159,6 +161,22 @@ class Game:
 
         # If no threats, play offensively (simple logic for now)
         return self._simple_ai_turn()
+
+    def _advanced_ai_turn(self):
+        # Defensive logic with archers
+        threatening_troops = [t for t in self.player_troops if t.y < self.river_y]
+        if threatening_troops:
+            archers_card = next((card for card in self.cards if card["name"] == "Archers"), None)
+            if archers_card and archers_card['mana_cost'] <= self.ai_mana:
+                self.ai_mana -= archers_card['mana_cost']
+                # Place archers defensively
+                start_pos = (threatening_troops[0].x, threatening_troops[0].y + 50)
+                troop = Troop(archers_card, "ai", start_pos)
+                self.ai_troops.append(troop)
+                return archers_card
+
+        # If archers can't be played or no threats, fall back to strategic AI
+        return self._strategic_ai_turn()
 
     def update(self):
         # Update player troops
